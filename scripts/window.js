@@ -11,6 +11,10 @@ clearButton.addEventListener('click', clearTabs);
 var tab_dict = {}; // Will probably have to use an initialization function to load previously stored tabs eventually
 var working_tabs = [];
 
+// Grab local storage to initialize the working tab array.
+// Runs the companion function listWorkingTabs() upon completion
+// of Promise as that function requires storage to be loaded
+// in order for it to run successfully.
 // TODO: be sure to toggle off the keepUuidOnUninstall and
 // keepStorageOnUninstall in about:config when done testing.
 function initialize_working_tabs() {
@@ -25,9 +29,9 @@ function initialize_working_tabs() {
     else {
       console.log("Working tabs not yet saved; skipping initialization...");
     }
+    listWorkingTabs();
   });
 }
-initialize_working_tabs();
 
 function storeTabs() {
   var storing = browser.storage.local.set({ working: working_tabs });
@@ -44,18 +48,17 @@ function clearTabs() {
   console.log("Stored working tabs have been cleared.");
 }
 
+// Helper function
 function getCurrentWindowTabs() {
   return browser.tabs.query({currentWindow: true});
 }
 
+// List tabs from current active window. Hyperlinks contain href, url, and title information.
 function listTabs() {
   getCurrentWindowTabs().then((tabs) => {
     let tabsList = document.getElementById('list-tabs');
-    let currentTabs = document.createDocumentFragment();
     let limit = 50;
     let counter = 0;
-
-    tabsList.textContent = '';
 
     for(let tab of tabs) {
       if(!tab.active && counter <= limit) {
@@ -64,14 +67,34 @@ function listTabs() {
         tabLink.textContent = tab.title || tab.id;
         tabLink.setAttribute('href', tab.id);
         tabLink.classList.add('tab-click');
-        tabLink.setAttribute('url', tab.url)
-        currentTabs.appendChild(tabLink);
+        tabLink.setAttribute('url', tab.url);
+        tabLink.setAttribute('title', tab.title);
+        tabsList.appendChild(tabLink);
+        tabsList.appendChild(document.createElement('br'));
       }
       counter += 1;
     }
-    tabsList.appendChild(currentTabs);
-    //tabsList.appendChild("<br />");
   });
+}
+
+// List working tabs for creation of profiles.
+function listWorkingTabs() {
+  let workingTabsList = document.getElementById('working-tabs');
+  let bufTabs = document.createDocumentFragment();
+  bufTabs.textContent = "Working tabs: "
+  bufTabs.appendChild(document.createElement('br'));
+
+  for(let tab of working_tabs) {
+    let tabLink = document.createElement('a');
+
+    tabLink.textContent = tab.title;
+    tabLink.setAttribute('href', tab.id);
+    tabLink.classList.add('tab-remove');
+    tabLink.setAttribute('url', tab.url);
+    bufTabs.appendChild(tabLink);
+    bufTabs.appendChild(document.createElement('br'));
+  }
+  workingTabsList.replaceChildren(bufTabs); // Required so working tabs list auto-updates on click in HTML
 }
 
 // Update drop-down list of profiles on main HTML display.
@@ -86,8 +109,8 @@ function updateProfiles() {
     //console.log("Parent element: ");
     //console.log(dropdownMenu)
 
+    // Loop through all keys to add profiles to drop-down menu
     for(let key of keys) {
-      // Loop through all keys to add profiles to drop-down menu
       if(key != "working") { // We don't want to add the working tabs as a profile
         profile = document.createElement('option');
         buf = dropdownMenu.appendChild(profile);
@@ -98,14 +121,26 @@ function updateProfiles() {
   });
 }
 
+// Run init functions on load
+document.addEventListener("DOMContentLoaded", initialize_working_tabs);
 document.addEventListener("DOMContentLoaded", listTabs);
+document.addEventListener("DOMContentLoaded", updateProfiles);
 
 document.addEventListener("click", (e) => {
   if(e.target.classList.contains('tab-click')) {
+    var tab_title = e.target.getAttribute('title');
     var tab_id = e.target.getAttribute('href');
     var tab_url = e.target.getAttribute('url');
 
-    working_tabs.push(tab_url);
+    working_tabs.push({ title: tab_title, url: tab_url, id: tab_id });
+    listWorkingTabs();
+  }
+
+  if(e.target.classList.contains('tab-remove')) {
+    var bufArray = working_tabs.filter((item) => item.url !== e.target.getAttribute('url'));
+    working_tabs = bufArray;
+    console.log("Tab removed.");
+    listWorkingTabs();
   }
 
   e.preventDefault();

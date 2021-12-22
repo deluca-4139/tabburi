@@ -74,13 +74,37 @@ function listTabs() {
   });
 }
 
+// Update drop-down list of profiles on main HTML display.
+// Will probably be called on creation of new profiles by user
+// in order to keep display up to date.
+function updateProfiles() {
+  var getStorage = browser.storage.local.get(null)
+  getStorage.then((results) => {
+    var keys = Object.keys(results);
+    var dropdownMenu = document.getElementById('tab-profiles'); // HTMLOptionElement for the drop-down menu
+    var profile, buf; // Working variables for usage with HTML elements
+    //console.log("Parent element: ");
+    //console.log(dropdownMenu)
+
+    for(let key of keys) {
+      // Loop through all keys to add profiles to drop-down menu
+      if(key != "working") { // We don't want to add the working tabs as a profile
+        profile = document.createElement('option');
+        buf = dropdownMenu.appendChild(profile);
+        buf.value = key;
+        buf.text = key;
+      }
+    }
+  });
+}
+
 document.addEventListener("DOMContentLoaded", listTabs);
 
 document.addEventListener("click", (e) => {
   if(e.target.classList.contains('tab-click')) {
     var tab_id = e.target.getAttribute('href');
     var tab_url = e.target.getAttribute('url');
-    
+
     working_tabs.push(tab_url);
   }
 

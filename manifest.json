@@ -11,6 +11,10 @@
     "storage"
   ],
 
+  "background": {
+    "scripts": ["scripts/background.js"]
+  },
+
   "browser_action": {
     "default_title": "Hello!~",
     "default_popup": "htmls/window.html"
@@ -18,6 +22,12 @@
 
   "icons": {
     "48": "icons/border-48.png"
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{769c85e7-528c-4242-b8cb-f9aab3f90675}"
+    }
   }
 
 }

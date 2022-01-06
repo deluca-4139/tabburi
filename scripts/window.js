@@ -1,12 +1,12 @@
 // These buttons might require CSS modules at some point?
 // Not sure; they seem to function fine as they are now.
-var storeButton = document.querySelector('.store');
+var clearDataButton = document.querySelector('.clearData');
 var openButton = document.querySelector('.open');
 var clearButton = document.querySelector('.clear');
 var saveButton = document.querySelector('.save');
 var deleteButton = document.querySelector('.delete');
 
-storeButton.addEventListener('click', storeTabs);
+clearDataButton.addEventListener('click', clearData);
 openButton.addEventListener('click', openTabs);
 clearButton.addEventListener('click', clearTabs);
 saveButton.addEventListener('click', saveProfile);
@@ -23,7 +23,7 @@ document.getElementById('tab-profiles').onchange = profileSelect; // Couldn't ge
 // in order for it to run successfully.
 // TODO: be sure to toggle off the keepUuidOnUninstall and
 // keepStorageOnUninstall in about:config when done testing.
-function initialize_working_tabs() {
+function initializeWorkingTabs() {
   var getStorage = browser.storage.local.get(null);
   getStorage.then((results) => {
     if(results["working"]) {
@@ -40,12 +40,11 @@ function initialize_working_tabs() {
 }
 
 // Grab local storage to initialize profile storage.
-// TODO: create a "default" profile that contains all open tabs?
-function initialize_profiles() {
+function initializeProfiles() {
   var getStorage = browser.storage.local.get(null);
   getStorage.then((results) => {
     for(let dict in results) {
-      if(dict != "working") {
+      if(dict != "working" && dict != "env") {
         profile_dict[dict] = results[dict];
       }
     }
@@ -53,14 +52,113 @@ function initialize_profiles() {
   });
 }
 
+// Initialize the environment variables.
+// This is a dictionary that contains:
+// current: currently active profile
+// switching: whether or not the extension is currently switching to a new profile/window
+//    if true, the extension has not yet completed the process of opening a new window (see background.js)
+//    if false, background.js has successfully caught the opening of the new window and reverted this value to false.
+function initializeEnv() {
+  var getStorage = browser.storage.local.get(null);
+  getStorage.then((results) => {
+    if(results["env"]) {
+      return null; // what do I want to do here?
+    }
+    else {
+      console.log("env vars not detected. Creating...");
+      var envDict = { "current": "Default", "switching": false }; // update with other env var init values as needed
+      browser.storage.local.set({ "env": envDict });
+    }
+  });
+}
+
+// Create default profile.
+// Default profile contains all active tabs upon first launch of the extension.
+// More documentation needed...
+// TODO: do not allow user to create a profile that overwrites default
+// TODO: warn user upon deletion of default profile
+function createDefaultProfile() {
+  var getStorage = browser.storage.local.get(null);
+  getStorage.then((results) => {
+    if(results["Default"]) {
+      return null; // what do I want to do here?
+    }
+    else {
+      console.log("Default profile not detected. Creating...");
+      getCurrentWindowTabs().then((tabs) => {
+        var storing = browser.storage.local.set({ "Default": tabs });
+        storing.then(() => {
+          initializeProfiles();
+          updateProfiles();
+        });
+      });
+    }
+  });
+}
+
 // On button click functions.
-function storeTabs() {
-  var storing = browser.storage.local.set({ working: working_tabs });
-  console.log("Your working tabs have been stored.");
+// TODO: document
+function clearData() {
+  var clearData = browser.storage.local.clear(); // if I keep this button around, will probably want to warn before clearing all data
+  clearData.then(() => {
+    console.log("Your saved data has been cleared.");
+  });
 }
 
 function openTabs() {
-  console.log(working_tabs);
+  var profile = profile_dict[document.getElementById('tab-profiles').value];
+  var tabArr = [];
+  var currentWindow = browser.windows.getCurrent();
+  currentWindow.then((cW) => {
+    for(let tab in profile) {
+      tabArr.push(profile[tab]);
+    }
+    var parsedTabArr = [];
+    // Mandatory parsing to make sure browser.windows.create doesn't throw a
+    // malformed URL exception when attempting to create a privileged URL tab
+    for(let tab in tabArr) {
+      try {
+        let urlTest = new URL(tabArr[tab]["url"]);
+        if(urlTest.protocol === "http:" || urlTest.protocol === "https:") {
+          parsedTabArr.push(tabArr[tab]);
+        }
+      }
+      catch {}
+    }
+    let createData = {
+      state: "maximized",
+      //url: urlArr
+      url: parsedTabArr[0]["url"] // First tab in new window is first tab in list...
+    };
+    delete parsedTabArr[0]; // ...then delete that tab from the array before we start creating the rest.
+    var envDict = browser.storage.local.get(null);
+    envDict.then((results) => {
+      results["env"]["current"] = document.getElementById('tab-profiles').value;
+      results["env"]["switching"] = true;
+      var storing = browser.storage.local.set({ "env": results["env"] });
+      storing.then(() => {
+        let createWindow = browser.windows.create(createData);
+        createWindow.then((w) => {
+          for(tab in parsedTabArr) {
+            browser.tabs.create({
+              //windowId: w.id, // might need this if for some reason tabs aren't being opened in the proper window
+              active: false,
+              discarded: true,
+              //favIconUrl: parsedTabArr[tab]["favicon"], // This isn't possible to set in tabs.create, leaving in case I manage to figure out how to do so
+              title: parsedTabArr[tab]["title"],
+              url: parsedTabArr[tab]["url"]
+            });
+          }
+          let closing = browser.windows.remove(cW["id"]); // Might want to add in a checkbox to toggle this functionality in the future
+          closing.then(() => {
+            let val = document.getElementById('tab-profiles').value;
+            console.log(`Current profile set to ${val}.`);
+            console.log("Profile loaded successfully.");
+          });
+        });
+      });
+    });
+  });
 }
 
 function clearTabs() {
@@ -80,8 +178,10 @@ function clearTabs() {
 function saveProfile() {
   var textBox = document.getElementById('profile-name');
   var storing = browser.storage.local.set({ [textBox.value]: working_tabs });
-  storing.then(() => { updateProfiles(); });
-  initialize_profiles();
+  storing.then(() => {
+    initializeProfiles();
+    updateProfiles();
+  });
   console.log("Profile saved.");
 }
 
@@ -128,27 +228,25 @@ function getCurrentWindowTabs() {
   return browser.tabs.query({currentWindow: true});
 }
 
-// List tabs from current active window. Hyperlinks contain href, url, and title information.
+// List tabs from current active window. Hyperlinks contain href, url, favicon, and title information.
 // Will need to change to replaceChildren() structure if list requires being updated.
 function listTabs() {
   getCurrentWindowTabs().then((tabs) => {
     let tabsList = document.getElementById('list-tabs');
     let limit = 50;
-    let counter = 0;
+    //let counter = 0; // Might want to re-add this in the future
 
     for(let tab of tabs) {
-      if(!tab.active && counter <= limit) {
-        let tabLink = document.createElement('a');
+      let tabLink = document.createElement('a');
 
-        tabLink.textContent = tab.title || tab.id;
-        tabLink.setAttribute('href', tab.id);
-        tabLink.classList.add('tab-click');
-        tabLink.setAttribute('url', tab.url);
-        tabLink.setAttribute('title', tab.title);
-        tabsList.appendChild(tabLink);
-        tabsList.appendChild(document.createElement('br'));
-      }
-      counter += 1;
+      tabLink.textContent = tab.title || tab.id;
+      tabLink.setAttribute('href', tab.id);
+      tabLink.classList.add('tab-click');
+      tabLink.setAttribute('url', tab.url);
+      tabLink.setAttribute('title', tab.title);
+      tabLink.setAttribute('favicon', tab.favIconUrl);
+      tabsList.appendChild(tabLink);
+      tabsList.appendChild(document.createElement('br'));
     }
   });
 }
@@ -174,8 +272,9 @@ function listWorkingTabs() {
 }
 
 // Update drop-down list of profiles on main HTML display.
-// Will probably be called on creation of new profiles by user
+// Called on creation of new profiles by user
 // in order to keep display up to date.
+// TODO: update to use already-stored profile_dict instead of regrabbing local storage?
 function updateProfiles() {
   var getStorage = browser.storage.local.get(null);
   getStorage.then((results) => {
@@ -186,7 +285,7 @@ function updateProfiles() {
 
     // Loop through all keys to add profiles to drop-down menu
     for(let key of keys) {
-      if(key != "working") { // We don't want to add the working tabs as a profile
+      if(key != "working" && key != "env") { // We don't want to add the working tabs/env-vars as a profile
         profile = document.createElement('option');
         profile.value = key;
         profile.text = key;
@@ -198,18 +297,21 @@ function updateProfiles() {
 }
 
 // Run init functions on load
-document.addEventListener("DOMContentLoaded", initialize_working_tabs);
+document.addEventListener("DOMContentLoaded", initializeWorkingTabs);
 document.addEventListener("DOMContentLoaded", listTabs);
+document.addEventListener("DOMContentLoaded", createDefaultProfile);
 document.addEventListener("DOMContentLoaded", updateProfiles);
-document.addEventListener("DOMContentLoaded", initialize_profiles);
+document.addEventListener("DOMContentLoaded", initializeProfiles);
+document.addEventListener("DOMContentLoaded", initializeEnv);
 
 document.addEventListener("click", (e) => {
   if(e.target.classList.contains('tab-click')) {
     var tab_title = e.target.getAttribute('title');
     var tab_id = e.target.getAttribute('href');
     var tab_url = e.target.getAttribute('url');
+    var tab_favicon = e.target.getAttribute('favicon');
 
-    working_tabs.push({ title: tab_title, url: tab_url, id: tab_id });
+    working_tabs.push({ title: tab_title, url: tab_url, id: tab_id, favicon: tab_favicon });
     listWorkingTabs();
   }
 

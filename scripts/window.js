@@ -127,7 +127,6 @@ function openTabs() {
     }
     let createData = {
       state: "maximized",
-      //url: urlArr
       url: parsedTabArr[0]["url"] // First tab in new window is first tab in list...
     };
     delete parsedTabArr[0]; // ...then delete that tab from the array before we start creating the rest.
@@ -238,8 +237,20 @@ function listTabs() {
 
     for(let tab of tabs) {
       let tabLink = document.createElement('a');
+      let maxLinkLength = 45;
 
-      tabLink.textContent = tab.title || tab.id;
+      if(tab.title) {
+        if(tab.title.length < maxLinkLength) {
+          tabLink.textContent = tab.title;
+        }
+        else {
+          tabLink.textContent = tab.title.substring(0, maxLinkLength) + "..."
+        }
+      }
+      else {
+        tabLink.textContent = tab.id;
+      }
+
       tabLink.setAttribute('href', tab.id);
       tabLink.classList.add('tab-click');
       tabLink.setAttribute('url', tab.url);

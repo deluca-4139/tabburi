@@ -5,12 +5,14 @@ var openButton = document.querySelector('.open');
 var clearButton = document.querySelector('.clear');
 var saveButton = document.querySelector('.save');
 var deleteButton = document.querySelector('.delete');
+var wizardButton = document.querySelector('.profileWizard');
 
 clearDataButton.addEventListener('click', clearData);
 openButton.addEventListener('click', openTabs);
 clearButton.addEventListener('click', clearTabs);
 saveButton.addEventListener('click', saveProfile);
 deleteButton.addEventListener('click', deleteConfirm);
+wizardButton.addEventListener('click', openWizard);
 
 var profile_dict = {}; // Will probably have to use an initialization function to load previously stored tabs eventually
 var working_tabs = [];
@@ -211,6 +213,19 @@ function deleteProfile() {
   console.log("Profile deleted.")
   updateProfiles();
   listWorkingTabs();
+}
+
+function openWizard() {
+  let createData = {
+    type: "panel",
+    url: "../htmls/popup.html",
+    height: 800,
+    width: 600
+  };
+  let creating = browser.windows.create(createData);
+  creating.then(() => {
+    console.log("Wizard opened.");
+  });
 }
 
 // Update working tabs (and list) when profile is selected.

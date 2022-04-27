@@ -1,3 +1,5 @@
+"use strict";
+
 // These buttons might require CSS modules at some point?
 // Not sure; they seem to function fine as they are now.
 var clearDataButton = document.querySelector('.clearData');
@@ -220,7 +222,7 @@ function openWizard() {
     type: "panel",
     url: "../htmls/popup.html",
     height: 800,
-    width: 600
+    width: 1200
   };
   let creating = browser.windows.create(createData);
   creating.then(() => {
@@ -270,7 +272,7 @@ function listTabs() {
       tabLink.classList.add('tab-click');
       tabLink.setAttribute('url', tab.url);
       tabLink.setAttribute('title', tab.title);
-      tabLink.setAttribute('favicon', tab.favIconUrl);
+      tabLink.setAttribute('favIconUrl', tab.favIconUrl);
       tabsList.appendChild(tabLink);
       tabsList.appendChild(document.createElement('br'));
     }
@@ -335,9 +337,9 @@ document.addEventListener("click", (e) => {
     var tab_title = e.target.getAttribute('title');
     var tab_id = e.target.getAttribute('href');
     var tab_url = e.target.getAttribute('url');
-    var tab_favicon = e.target.getAttribute('favicon');
+    var tab_favicon = e.target.getAttribute('favIconUrl');
 
-    working_tabs.push({ title: tab_title, url: tab_url, id: tab_id, favicon: tab_favicon });
+    working_tabs.push({ title: tab_title, url: tab_url, id: tab_id, favIconUrl: tab_favicon });
     listWorkingTabs();
   }
 

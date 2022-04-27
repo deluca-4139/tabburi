@@ -3,15 +3,32 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <title>Profile Wizard</title>
   <link href="../styles/wizard.css" rel="stylesheet">
 </head>
 <body>
-  <br>
-  <br>
+  <div class="row">
+    <div class="column">
+      <label for="tab-profiles">Select a profile:</label>
+      <select name="tab-profiles" id="tab-profiles">
+        <!-- Profile names go here; created in wizard.js -->
+      </select>
+      <br>
+      <br>
 
-  <button class="submitTabs">Submit</button>
+      <button class="submitTabs">Submit</button>
 
-  <div id="list-tabs"><br></div>
+      <div id="list-tabs"><br></div>
+    </div>
+    <div class="column">
+      <br>
+      <br>
+      Tabs in currently selected profile:
+      <br>
+      <br>
+      <div id="working-tabs"></div>
+    </div>
+  </div>
 
   <script src="../scripts/wizard.js"></script>
 </body>

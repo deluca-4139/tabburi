@@ -5,7 +5,7 @@ html {
 }
 
 body {
-  width: 550px;
+  width: 1100px;
   margin: 20 auto;
 }
 
@@ -58,4 +58,12 @@ img {
   margin-right: 4px;
   margin-top: 5px;
   display: inline-flex;
+}
+
+.row {
+  display: flex;
+}
+
+.column {
+  flex: 50%;
 }

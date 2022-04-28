@@ -1,10 +1,10 @@
 {
 
   "manifest_version": 2,
-  "name": "Untitled Tab Manager",
-  "version": "1.0",
+  "name": "tabburi",
+  "version": "0.0.1",
 
-  "description": "WIP",
+  "description": "Tab management browser extension.",
 
   "permissions": [
     "tabs",
@@ -16,7 +16,7 @@
   },
 
   "browser_action": {
-    "default_title": "Hello!~",
+    "default_title": "tabburi",
     "default_popup": "htmls/window.html"
   },
 

@@ -6,51 +6,65 @@ submitTabsButton.addEventListener('click', submitTabs);
 
 var profile_dict = {};
 var working_tabs = [];
+var wizard_tabs = null;
 
 document.getElementById('tab-profiles').onchange = profileSelect;
 
 // List tabs from current active window. Each tab has a checkbox and a favicon.
-// Will need to change to replaceChildren() structure if list requires being updated.
 // Note: taken and edited from window.js
 function listTabs() {
-  browser.tabs.query({windowId: 1}).then((tabs) => {
-    let tabsList = document.getElementById('list-tabs');
-    //let counter = 0; // Might want to re-add this in the future
+  // Load the list of tabs if this is the first time
+  // we're running the function; i.e. the window has
+  // just been opened
+  if(wizard_tabs == null) {
+    wizard_tabs = [];
+    browser.tabs.query({windowId: 1}).then((tabs) => {
+      for(let tab of tabs) {
+        wizard_tabs.push(tab);
+      }
+      return listTabs();
+    });
+  }
 
-    for(let tab of tabs) {
-      let tabCheckbox = document.createElement('input');
-      let tabLabel = document.createElement('label');
-      let maxLinkLength = 55;
+  let tabsListParent = document.getElementById('list-tabs');
+  let tabsList = document.createDocumentFragment();
+  //let counter = 0; // Might want to re-add this in the future
 
-      if(tab.title) {
-        if(tab.title.length < maxLinkLength) {
-          tabLabel.textContent = tab.title;
-        }
-        else {
-          tabLabel.textContent = tab.title.substring(0, maxLinkLength) + "..."
-        }
+  for(let tab of wizard_tabs) {
+    let tabCheckbox = document.createElement('input');
+    let tabLabel = document.createElement('label');
+    let maxLinkLength = 55;
+
+    if(tab.title) {
+      if(tab.title.length < maxLinkLength) {
+        tabLabel.textContent = tab.title;
       }
       else {
-        tabLabel.textContent = tab.id;
+        tabLabel.textContent = tab.title.substring(0, maxLinkLength) + "..."
       }
-
-      tabCheckbox.setAttribute('type', "checkbox");
-      tabCheckbox.setAttribute('name', "tabWizardList");
-      tabCheckbox.setAttribute('id', `${tab.id}`);
-      tabCheckbox.setAttribute('value', tab.url);
-      tabCheckbox.setAttribute('title', tab.title);
-
-      tabLabel.setAttribute('for', `${tab.id}`);
-
-      let tabImage = document.createElement('img');
-      tabImage.setAttribute('src', tab.favIconUrl);
-
-      tabsList.appendChild(tabCheckbox);
-      tabsList.appendChild(tabImage);
-      tabsList.appendChild(tabLabel);
-      tabsList.appendChild(document.createElement('br'));
     }
-  });
+    else {
+      tabLabel.textContent = tab.id;
+    }
+
+    tabCheckbox.setAttribute('type', "checkbox");
+    tabCheckbox.setAttribute('name', "tabWizardList");
+    tabCheckbox.setAttribute('id', `${tab.id}`);
+    tabCheckbox.setAttribute('value', tab.url);
+    tabCheckbox.setAttribute('title', tab.title);
+
+    tabLabel.setAttribute('for', `${tab.id}`);
+
+    let tabImage = document.createElement('img');
+    tabImage.setAttribute('id', `${tab.id}`);
+    tabImage.setAttribute('src', tab.favIconUrl);
+
+    tabsList.appendChild(tabCheckbox);
+    tabsList.appendChild(tabImage);
+    tabsList.appendChild(tabLabel);
+    tabsList.appendChild(document.createElement('br'));
+  }
+  tabsListParent.replaceChildren(tabsList);
 }
 
 // Update drop-down list of profiles on main HTML display.
@@ -118,7 +132,7 @@ function listWorkingTabs() {
     }
 
     tabCheckbox.setAttribute('type', "checkbox");
-    tabCheckbox.setAttribute('name', "tabWizardList");
+    tabCheckbox.setAttribute('name', "tabProfileList");
     tabCheckbox.setAttribute('id', `${tab.id}`);
     tabCheckbox.setAttribute('value', tab.url);
     tabCheckbox.setAttribute('title', tab.title);
@@ -126,6 +140,7 @@ function listWorkingTabs() {
     tabLabel.setAttribute('for', `${tab.id}`);
 
     let tabImage = document.createElement('img');
+    tabImage.setAttribute('id', `${tab.id}`);
     tabImage.setAttribute('src', tab.favIconUrl);
 
     bufTabs.appendChild(tabCheckbox);
@@ -148,16 +163,49 @@ function profileSelect() {
 
 // Called when submit tabs button is pressed.
 // Will loop through all checkboxes attached to listed tabs
-// and record which are checked.
+// and record which are checked, adding them to the
+// working tabs as well as the selected profile.
+// TODO: delete tabs from main window when submitted
 function submitTabs() {
   let tabsList = document.getElementsByName('tabWizardList');
+  let imgList = document.getElementsByTagName('img');
   var checkedItems = [];
   for(let tab in tabsList) {
     if(tabsList[tab].checked) {
-      checkedItems.push([tabsList[tab].title, tabsList[tab].value]);
+      let favIconUrl;
+      for(let img in imgList) {
+        if(imgList[img].id == tabsList[tab].id) {
+          favIconUrl = imgList[img].getAttribute('src');
+        }
+      }
+
+      checkedItems.push([tabsList[tab].title, tabsList[tab].value, favIconUrl]);
     }
   }
-  console.log(checkedItems);
+
+  for(let item in checkedItems) {
+    working_tabs.push({ title: checkedItems[item][0], url: checkedItems[item][1], favIconUrl: checkedItems[item][2] });
+  }
+
+  wizard_tabs = wizard_tabs.filter((value, index, arr) => {
+    for(let tab in checkedItems) {
+      if(checkedItems[tab][1] == value.url) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // Copied and edited from window.js saveProfile()
+  var profileSelectBox = document.getElementById('tab-profiles');
+  var storing = browser.storage.local.set({ [profileSelectBox.value]: working_tabs });
+  storing.then(() => {
+    initializeProfiles();
+    updateProfiles();
+    listTabs();
+    listWorkingTabs();
+  });
+
 }
 
 document.addEventListener("DOMContentLoaded", listTabs);

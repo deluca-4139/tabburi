@@ -142,7 +142,7 @@ function openTabs() {
       storing.then(() => {
         let createWindow = browser.windows.create(createData);
         createWindow.then((w) => {
-          for(tab in parsedTabArr) {
+          for(let tab in parsedTabArr) {
             browser.tabs.create({
               //windowId: w.id, // might need this if for some reason tabs aren't being opened in the proper window
               active: false,

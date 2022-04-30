@@ -62,6 +62,7 @@ function initializeProfiles() {
 // switching: whether or not the extension is currently switching to a new profile/window
 //    if true, the extension has not yet completed the process of opening a new window (see background.js)
 //    if false, background.js has successfully caught the opening of the new window and reverted this value to false.
+// window: contains window id of window that opens the profile
 function initializeEnv() {
   var getStorage = browser.storage.local.get(null);
   getStorage.then((results) => {
@@ -70,7 +71,7 @@ function initializeEnv() {
     }
     else {
       console.log("env vars not detected. Creating...");
-      var envDict = { "current": "Default", "switching": false }; // update with other env var init values as needed
+      var envDict = { "current": "Default", "switching": false, "window": -1 }; // update with other env var init values as needed
       browser.storage.local.set({ "env": envDict });
     }
   });
@@ -131,34 +132,17 @@ function openTabs() {
     }
     let createData = {
       state: "maximized",
-      url: parsedTabArr[0]["url"] // First tab in new window is first tab in list...
+      url: parsedTabArr[0]["url"] // First tab in new window is first tab in list
     };
-    delete parsedTabArr[0]; // ...then delete that tab from the array before we start creating the rest.
     var envDict = browser.storage.local.get(null);
     envDict.then((results) => {
       results["env"]["current"] = document.getElementById('tab-profiles').value;
       results["env"]["switching"] = true;
+      results["env"]["window"] = cW["id"];
       var storing = browser.storage.local.set({ "env": results["env"] });
       storing.then(() => {
-        let createWindow = browser.windows.create(createData);
-        createWindow.then((w) => {
-          for(let tab in parsedTabArr) {
-            browser.tabs.create({
-              //windowId: w.id, // might need this if for some reason tabs aren't being opened in the proper window
-              active: false,
-              discarded: true,
-              //favIconUrl: parsedTabArr[tab]["favicon"], // This isn't possible to set in tabs.create, leaving in case I manage to figure out how to do so
-              title: parsedTabArr[tab]["title"],
-              url: parsedTabArr[tab]["url"]
-            });
-          }
-          let closing = browser.windows.remove(cW["id"]); // Might want to add in a checkbox to toggle this functionality in the future
-          closing.then(() => {
-            let val = document.getElementById('tab-profiles').value;
-            console.log(`Current profile set to ${val}.`);
-            console.log("Profile loaded successfully.");
-          });
-        });
+        console.log("Handing off control to background script...");
+        browser.windows.create(createData);
       });
     });
   });

@@ -27,14 +27,23 @@ function windowOpen(windowInfo) {
       delete parsedTabArr[0]; // Delete first tab from array as it has already been created in the window
 
       for(let tab in parsedTabArr) {
-        browser.tabs.create({
-          //windowId: windowInfo["id"], // might need this if for some reason tabs aren't being opened in the proper window
-          active: false,
-          discarded: true,
-          //favIconUrl: parsedTabArr[tab]["favicon"], // This isn't possible to set in tabs.create, leaving in case I manage to figure out how to do so
-          title: parsedTabArr[tab]["title"],
-          url: parsedTabArr[tab]["url"]
-        });
+        if(results["env"]["discarded"]) {
+          browser.tabs.create({
+            //windowId: windowInfo["id"], // might need this if for some reason tabs aren't being opened in the proper window
+            active: false,
+            discarded: true,
+            //favIconUrl: parsedTabArr[tab]["favicon"], // This isn't possible to set in tabs.create, leaving in case I manage to figure out how to do so
+            title: parsedTabArr[tab]["title"],
+            url: parsedTabArr[tab]["url"]
+          });
+        }
+        else {
+          browser.tabs.create({
+            active: false,
+            discarded: false,
+            url: parsedTabArr[tab]["url"]
+          });
+        }
       }
 
       results["env"]["switching"] = false;

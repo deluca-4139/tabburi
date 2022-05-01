@@ -7,12 +7,14 @@ var createProfileButton = document.querySelector('.createProfile');
 var openButton = document.querySelector('.open');
 var deleteButton = document.querySelector('.delete');
 var wizardButton = document.querySelector('.profileWizard');
+var discardedCheckbox = document.querySelector('.discardedCheckbox');
 
 clearDataButton.addEventListener('click', clearData);
 createProfileButton.addEventListener('click', createProfile);
 openButton.addEventListener('click', openTabs);
 deleteButton.addEventListener('click', deleteConfirm);
 wizardButton.addEventListener('click', openWizard);
+discardedCheckbox.addEventListener('change', setDiscarded);
 
 var profile_dict = {}; // Will probably have to use an initialization function to load previously stored tabs eventually
 var working_tabs = [];
@@ -64,6 +66,7 @@ function initializeProfiles() {
 // wizard: contains a tuple where
 //    [0] is a boolean representing whether the wizard is open or not, and
 //    [1] is the window id of the wizard, or -1 if it is not open
+// discarded: whether or not the discarded checkbox should be checked
 //
 // This function also initializes the welcome
 // message depending on whether or not the
@@ -73,12 +76,14 @@ function initializeEnv() {
   getStorage.then((results) => {
     if(results["env"]) {
       document.getElementById('welcome').textContent = "たっぶり　へ　おかえり。";
+      document.getElementById('discardedCheckbox').checked = results["env"]["discarded"];
     }
     else {
       document.getElementById('welcome').textContent = "たっぶり　へ　ようこそ。";
+      document.getElementById('discardedCheckbox').checked = true;
 
       console.log("env vars not detected. Creating...");
-      var envDict = { "current": "Default", "switching": false, "window": -1, "wizard": [false, -1] }; // update with other env var init values as needed
+      var envDict = { "current": "Default", "switching": false, "window": -1, "wizard": [false, -1], "discarded": true }; // update with other env var init values as needed
       browser.storage.local.set({ "env": envDict });
     }
   });
@@ -304,30 +309,18 @@ function createProfile() {
   browser.windows.create(createData);
 }
 
+function setDiscarded() {
+  let checkbox = document.getElementById("discardedCheckbox");
+  console.log(checkbox.checked);
+  browser.storage.local.get(null).then((results) => {
+    results["env"]["discarded"] = checkbox.checked;
+    browser.storage.local.set({ "env": results["env"] });
+  });
+}
+
 // Run init functions on load
 document.addEventListener("DOMContentLoaded", initializeWorkingTabs);
 document.addEventListener("DOMContentLoaded", createDefaultProfile);
 document.addEventListener("DOMContentLoaded", updateProfiles);
 document.addEventListener("DOMContentLoaded", initializeProfiles);
 document.addEventListener("DOMContentLoaded", initializeEnv);
-
-document.addEventListener("click", (e) => {
-  if(e.target.classList.contains('tab-click')) {
-    var tab_title = e.target.getAttribute('title');
-    var tab_id = e.target.getAttribute('href');
-    var tab_url = e.target.getAttribute('url');
-    var tab_favicon = e.target.getAttribute('favIconUrl');
-
-    working_tabs.push({ title: tab_title, url: tab_url, id: tab_id, favIconUrl: tab_favicon });
-    listWorkingTabs();
-  }
-
-  if(e.target.classList.contains('tab-remove')) {
-    var bufArray = working_tabs.filter((item) => item.url !== e.target.getAttribute('url'));
-    working_tabs = bufArray;
-    console.log("Tab removed.");
-    listWorkingTabs();
-  }
-
-  e.preventDefault();
-});

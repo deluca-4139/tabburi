@@ -4,6 +4,10 @@ html {
   background-color: #E6E6E6;
 }
 
+.welcome {
+  font-family: 'BIZ UDPMincho', serif;
+}
+
 body {
   width: 450px;
   margin: 20 auto;

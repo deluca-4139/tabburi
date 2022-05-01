@@ -4,14 +4,12 @@
 // Not sure; they seem to function fine as they are now.
 var clearDataButton = document.querySelector('.clearData');
 var openButton = document.querySelector('.open');
-var clearButton = document.querySelector('.clear');
 var saveButton = document.querySelector('.save');
 var deleteButton = document.querySelector('.delete');
 var wizardButton = document.querySelector('.profileWizard');
 
 clearDataButton.addEventListener('click', clearData);
 openButton.addEventListener('click', openTabs);
-clearButton.addEventListener('click', clearTabs);
 saveButton.addEventListener('click', saveProfile);
 deleteButton.addEventListener('click', deleteConfirm);
 wizardButton.addEventListener('click', openWizard);
@@ -66,13 +64,19 @@ function initializeProfiles() {
 // wizard: contains a tuple where
 //    [0] is a boolean representing whether the wizard is open or not, and
 //    [1] is the window id of the wizard, or -1 if it is not open
+//
+// This function also initializes the welcome
+// message depending on whether or not the 
+// extension had been initialized before.
 function initializeEnv() {
   var getStorage = browser.storage.local.get(null);
   getStorage.then((results) => {
     if(results["env"]) {
-      return null; // what do I want to do here?
+      document.getElementById('welcome').textContent = "たっぶり　へ　おかえり。";
     }
     else {
+      document.getElementById('welcome').textContent = "たっぶり　へ　ようこそ。";
+
       console.log("env vars not detected. Creating...");
       var envDict = { "current": "Default", "switching": false, "window": -1, "wizard": [false, -1] }; // update with other env var init values as needed
       browser.storage.local.set({ "env": envDict });
@@ -151,20 +155,6 @@ function openTabs() {
   });
 }
 
-function clearTabs() {
-  var getStorage = browser.storage.local.get(null);
-  getStorage.then((results) => {
-    delete results["working"];
-    browser.storage.local.clear(); // This maybe isn't best practice... could lose all data if something goes wrong
-    for(let profile in profile_dict) {
-      browser.storage.local.set({ [profile]: profile_dict[profile] });
-    }
-  });
-  working_tabs = []; // Do I really want this?
-  listWorkingTabs();
-  console.log("Stored working tabs have been cleared.");
-}
-
 function saveProfile() {
   var textBox = document.getElementById('profile-name');
   var storing = browser.storage.local.set({ [textBox.value]: working_tabs });
@@ -239,46 +229,11 @@ function getCurrentWindowTabs() {
   return browser.tabs.query({currentWindow: true});
 }
 
-// List tabs from current active window. Hyperlinks contain href, url, favicon, and title information.
-// Will need to change to replaceChildren() structure if list requires being updated.
-function listTabs() {
-  getCurrentWindowTabs().then((tabs) => {
-    let tabsList = document.getElementById('list-tabs');
-    let limit = 50;
-    //let counter = 0; // Might want to re-add this in the future
-
-    for(let tab of tabs) {
-      let tabLink = document.createElement('a');
-      let maxLinkLength = 45;
-
-      if(tab.title) {
-        if(tab.title.length < maxLinkLength) {
-          tabLink.textContent = tab.title;
-        }
-        else {
-          tabLink.textContent = tab.title.substring(0, maxLinkLength) + "..."
-        }
-      }
-      else {
-        tabLink.textContent = tab.id;
-      }
-
-      tabLink.setAttribute('href', tab.id);
-      tabLink.classList.add('tab-click');
-      tabLink.setAttribute('url', tab.url);
-      tabLink.setAttribute('title', tab.title);
-      tabLink.setAttribute('favIconUrl', tab.favIconUrl);
-      tabsList.appendChild(tabLink);
-      tabsList.appendChild(document.createElement('br'));
-    }
-  });
-}
-
 // List working tabs for creation of profiles.
 function listWorkingTabs() {
   let workingTabsList = document.getElementById('working-tabs');
   let bufTabs = document.createDocumentFragment();
-  bufTabs.textContent = "Working tabs: ";
+  bufTabs.textContent = "Tabs in currently selected profile: ";
   bufTabs.appendChild(document.createElement('br'));
 
   for(let tab of working_tabs) {
@@ -321,7 +276,6 @@ function updateProfiles() {
 
 // Run init functions on load
 document.addEventListener("DOMContentLoaded", initializeWorkingTabs);
-document.addEventListener("DOMContentLoaded", listTabs);
 document.addEventListener("DOMContentLoaded", createDefaultProfile);
 document.addEventListener("DOMContentLoaded", updateProfiles);
 document.addEventListener("DOMContentLoaded", initializeProfiles);

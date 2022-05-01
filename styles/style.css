@@ -2,6 +2,7 @@ html {
   font-size: 15px;
   font-family: "Space Mono", monospace;
   background-color: #E6E6E6;
+  overflow-x: hidden;
 }
 
 .welcome {
@@ -53,4 +54,13 @@ button:active {
   background-color: #a0c7e4;
   box-shadow: none;
   color: #2c5777;
+}
+
+img {
+  max-width: 16px;
+  max-height: 16px;
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-top: 5px;
+  display: inline-flex;
 }

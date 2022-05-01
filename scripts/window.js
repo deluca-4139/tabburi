@@ -66,7 +66,7 @@ function initializeProfiles() {
 //    [1] is the window id of the wizard, or -1 if it is not open
 //
 // This function also initializes the welcome
-// message depending on whether or not the 
+// message depending on whether or not the
 // extension had been initialized before.
 function initializeEnv() {
   var getStorage = browser.storage.local.get(null);
@@ -235,15 +235,33 @@ function listWorkingTabs() {
   let bufTabs = document.createDocumentFragment();
   bufTabs.textContent = "Tabs in currently selected profile: ";
   bufTabs.appendChild(document.createElement('br'));
+  bufTabs.appendChild(document.createElement('br'));
 
   for(let tab of working_tabs) {
-    let tabLink = document.createElement('a');
+    let tabCheckbox = document.createElement('input');
+    let tabLabel = document.createElement('label');
+    let maxLinkLength = 45;
 
-    tabLink.textContent = tab.title;
-    tabLink.setAttribute('href', tab.id);
-    tabLink.classList.add('tab-remove');
-    tabLink.setAttribute('url', tab.url);
-    bufTabs.appendChild(tabLink);
+    if(tab.title) {
+      if(tab.title.length < maxLinkLength) {
+        tabLabel.textContent = tab.title;
+      }
+      else {
+        tabLabel.textContent = tab.title.substring(0, maxLinkLength) + "..."
+      }
+    }
+    else {
+      tabLabel.textContent = tab.id;
+    }
+
+    tabLabel.setAttribute('for', `${tab.id}`);
+
+    let tabImage = document.createElement('img');
+    tabImage.setAttribute('id', `${tab.id}`);
+    tabImage.setAttribute('src', tab.favIconUrl);
+
+    bufTabs.appendChild(tabImage);
+    bufTabs.appendChild(tabLabel);
     bufTabs.appendChild(document.createElement('br'));
   }
   workingTabsList.replaceChildren(bufTabs); // Required so working tabs list auto-updates on click in HTML

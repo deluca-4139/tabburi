@@ -212,7 +212,6 @@ function submitTabs() {
     listTabs();
     listWorkingTabs();
   });
-
 }
 
 document.addEventListener("DOMContentLoaded", listTabs);

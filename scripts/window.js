@@ -3,14 +3,14 @@
 // These buttons might require CSS modules at some point?
 // Not sure; they seem to function fine as they are now.
 var clearDataButton = document.querySelector('.clearData');
+var createProfileButton = document.querySelector('.createProfile');
 var openButton = document.querySelector('.open');
-var saveButton = document.querySelector('.save');
 var deleteButton = document.querySelector('.delete');
 var wizardButton = document.querySelector('.profileWizard');
 
 clearDataButton.addEventListener('click', clearData);
+createProfileButton.addEventListener('click', createProfile);
 openButton.addEventListener('click', openTabs);
-saveButton.addEventListener('click', saveProfile);
 deleteButton.addEventListener('click', deleteConfirm);
 wizardButton.addEventListener('click', openWizard);
 
@@ -178,20 +178,21 @@ function deleteConfirm() {
 // Swaps event listeners back and edits text upon completion of delete.
 function deleteProfile() {
   var profileName = document.getElementById('tab-profiles').value;
-  delete profile_dict[profileName];
-  browser.storage.local.clear(); // This maybe isn't best practice... could lose all data if something goes wrong
-  for(let profile in profile_dict) {
-    browser.storage.local.set({ [profile]: profile_dict[profile] });
-  }
-  browser.storage.local.set({ working: working_tabs }); // Might not need in the future?
+  browser.storage.local.get(null).then((results) => {
+    delete results[profileName];
+    browser.storage.local.clear(); // This maybe isn't best practice... could lose all data if something goes wrong
+    for(let profile in results) {
+      browser.storage.local.set({ [profile]: results[profile] });
+    }
 
-  document.getElementById('delete-button').innerText = "Delete Profile";
-  deleteButton.removeEventListener('click', deleteProfile);
-  deleteButton.addEventListener('click', deleteConfirm);
+    document.getElementById('delete-button').innerText = "x";
+    deleteButton.removeEventListener('click', deleteProfile);
+    deleteButton.addEventListener('click', deleteConfirm);
 
-  console.log("Profile deleted.")
-  updateProfiles();
-  listWorkingTabs();
+    console.log("Profile deleted.")
+    updateProfiles();
+    listWorkingTabs();
+  });
 }
 
 function openWizard() {
@@ -290,6 +291,17 @@ function updateProfiles() {
     }
     dropdownMenu.replaceChildren(bufMenu);
   });
+}
+
+function createProfile() {
+  let createData = {
+    type: "panel",
+    url: "../htmls/profile.html",
+    height: 50,
+    width: 430
+  };
+
+  browser.windows.create(createData);
 }
 
 // Run init functions on load

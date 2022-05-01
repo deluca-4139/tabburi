@@ -13,20 +13,14 @@ document.getElementById('tab-profiles').onchange = profileSelect;
 // List tabs from current active window.
 // Each tab has a checkbox and a favicon.
 // Note: taken and edited from window.js
-// TODO: since these tabs are meant to be the "original set"
-// of tabs that the user is working with, it might be better
-// to use the tabs listed in the default profile, since that
-// is specifically created on first boot for that purpose.
-// If we do that though, we'll need to update the id's of
-// each of the tabs in the profile, as they are session specific.
 function listTabs() {
   // Load the list of tabs if this is the first time
   // we're running the function; i.e. the window has
   // just been opened
   if(wizard_tabs == null) {
     wizard_tabs = [];
-    browser.tabs.query({windowId: 1}).then((tabs) => { // This assumes that the main window will always have an id of 1, which I'm not sure of
-      for(let tab of tabs) {
+    browser.storage.local.get(null).then((results) => {
+      for(let tab of results["Default"]) {
         wizard_tabs.push(tab);
       }
       return listTabs();
@@ -172,7 +166,6 @@ function profileSelect() {
 // Will loop through all checkboxes attached to listed tabs
 // and record which are checked, adding them to the
 // working tabs as well as the selected profile.
-// TODO: delete tabs from main window when submitted
 function submitTabs() {
   let tabsList = document.getElementsByName('tabWizardList');
   let imgList = document.getElementsByTagName('img');
@@ -209,22 +202,15 @@ function submitTabs() {
     return true;
   });
 
-  // Save modified profile
+  // Save modified profiles
   // Note: copied and edited from window.js saveProfile()
   var profileSelectBox = document.getElementById('tab-profiles');
-  var storing = browser.storage.local.set({ [profileSelectBox.value]: working_tabs });
+  var storing = browser.storage.local.set({ [profileSelectBox.value]: working_tabs, "Default": wizard_tabs });
   storing.then(() => {
-    let delete_ids = [];
-    for(let tab in checkedItems) {
-      delete_ids.push(parseInt(checkedItems[tab][3]));
-    }
-
-    browser.tabs.remove(delete_ids).then(() => {
-      initializeProfiles();
-      updateProfiles();
-      listTabs();
-      listWorkingTabs();
-    });
+    initializeProfiles();
+    updateProfiles();
+    listTabs();
+    listWorkingTabs();
   });
 
 }

@@ -1,22 +1,8 @@
-function addTab(tabInfo) {
-  var getStorage = browser.storage.local.get(null);
-  //console.dir(tabInfo);
-  getStorage.then((results) => {
-    if(results["env"]["switching"]) {
-      // console.dir(results);
-      // results["env"]["switching"] = false;
-      // var storing = browser.storage.local.set({ "env": results["env"] });
-      // storing.then(() => {
-      //   console.log("Switching env var set to false.");
-      // });
-    }
-  });
-}
-
-function removeTab(tabInfo) {
-
-}
-
+// Called when a new window is opened.
+// Checks to see if the "switching" environment variable
+// is set, in which case it takes control from the openTabs()
+// function from window.js and opens the tabs from the
+// selected profile in the newly opened window.
 function windowOpen(windowInfo) {
   browser.storage.local.get(null).then((results) => {
     if(results["env"]["switching"]) {
@@ -68,14 +54,40 @@ function windowOpen(windowInfo) {
   });
 }
 
-browser.tabs.onCreated.addListener((tabId, removeInfo) => {
-  addTab(tabId);
-});
+// Called when any tab modification is detected.
+// Updates current profile to reflect updated tabs.
+// First checks to make sure the wizard window was
+// not the window that was just opened, in which
+// case it immediately returns so as to not interact.
+function updateProfile(info) {
+  var getStorage = browser.storage.local.get(null);
+  getStorage.then((results) => {
+    if(results["env"]["switching"] || results["env"]["wizard"][0]) {
+      return null;
+    }
 
-browser.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  removeTab(removeInfo);
-});
+    browser.tabs.query({currentWindow: true}).then((tabs) => {
+      browser.storage.local.set({ [results["env"]["current"]]: tabs });
+    });
 
-browser.windows.onCreated.addListener((windowInfo) => {
-  windowOpen(windowInfo);
+  });
+}
+
+browser.tabs.onCreated.addListener(updateProfile);
+browser.tabs.onRemoved.addListener((tabId, removeInfo) => { updateProfile(removeInfo); });
+browser.tabs.onMoved.addListener((tabId, moveInfo) => { updateProfile(moveInfo); });
+browser.tabs.onUpdated.addListener((tabId, updateInfo) => { if(updateInfo["status"] === "complete" && updateInfo["url"] !== "about:blank") { updateProfile(updateInfo); } });
+browser.tabs.onAttached.addListener((tabId, attachInfo) => { updateProfile(attachInfo); });
+browser.tabs.onDetached.addListener((tabId, detachInfo) => { updateProfile(detachInfo); });
+
+browser.windows.onCreated.addListener((windowInfo) => { windowOpen(windowInfo); });
+browser.windows.onRemoved.addListener((windowId) => {
+  browser.storage.local.get(null).then((results) => {
+    if(windowId == results["env"]["wizard"][1]) {
+      results["env"]["wizard"] = [false, -1];
+      browser.storage.local.set({ "env": results["env"] }).then(() => {
+        console.log("Wizard closed.");
+      });
+    }
+  });
 });

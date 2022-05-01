@@ -63,6 +63,9 @@ function initializeProfiles() {
 //    if true, the extension has not yet completed the process of opening a new window (see background.js)
 //    if false, background.js has successfully caught the opening of the new window and reverted this value to false.
 // window: contains window id of window that opens the profile
+// wizard: contains a tuple where
+//    [0] is a boolean representing whether the wizard is open or not, and
+//    [1] is the window id of the wizard, or -1 if it is not open
 function initializeEnv() {
   var getStorage = browser.storage.local.get(null);
   getStorage.then((results) => {
@@ -71,7 +74,7 @@ function initializeEnv() {
     }
     else {
       console.log("env vars not detected. Creating...");
-      var envDict = { "current": "Default", "switching": false, "window": -1 }; // update with other env var init values as needed
+      var envDict = { "current": "Default", "switching": false, "window": -1, "wizard": [false, -1] }; // update with other env var init values as needed
       browser.storage.local.set({ "env": envDict });
     }
   });
@@ -208,9 +211,17 @@ function openWizard() {
     height: 800,
     width: 1200
   };
-  let creating = browser.windows.create(createData);
-  creating.then(() => {
-    console.log("Wizard opened.");
+
+  browser.storage.local.get(null).then((results) => {
+    results["env"]["wizard"] = [true, -1]
+    browser.storage.local.set({ "env": results["env"] }).then(() => {
+      browser.windows.create(createData).then((window, error) => {
+        results["env"]["wizard"] = [true, window.id];
+        browser.storage.local.set({ "env": results["env"] }).then(() => {
+          console.log("Wizard opened.");
+        });
+      });
+    });
   });
 }
 

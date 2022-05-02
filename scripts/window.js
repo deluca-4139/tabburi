@@ -235,7 +235,7 @@ function getCurrentWindowTabs() {
   return browser.tabs.query({currentWindow: true});
 }
 
-// List working tabs for creation of profiles.
+// List tabs in currently selected profile.
 function listWorkingTabs() {
   let workingTabsList = document.getElementById('working-tabs');
   let bufTabs = document.createDocumentFragment();

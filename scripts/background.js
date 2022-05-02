@@ -83,9 +83,28 @@ function updateProfile(info) {
 }
 
 browser.tabs.onCreated.addListener(updateProfile);
-browser.tabs.onRemoved.addListener((tabId, removeInfo) => { updateProfile(removeInfo); });
+browser.tabs.onRemoved.addListener((tabId, removeInfo) => {
+  // Might want to refactor this at some point,
+  // since it's so similar to the updateProfile
+  // function, but this works for now.
+  browser.storage.local.get(null).then((results) => {
+    if(results["env"]["switching"] || results["env"]["wizard"][0]) {
+      return null;
+    }
+
+    browser.tabs.query({currentWindow: true}).then((tabs) => {
+      browser.storage.local.set({ [results["env"]["current"]]: tabs.filter((value, index, arr) => {
+        return (value.id === tabId) ? false : true;
+      }) });
+    });
+  });
+});
 browser.tabs.onMoved.addListener((tabId, moveInfo) => { updateProfile(moveInfo); });
-browser.tabs.onUpdated.addListener((tabId, updateInfo) => { if(updateInfo["status"] === "complete" && updateInfo["url"] !== "about:blank") { updateProfile(updateInfo); } });
+browser.tabs.onUpdated.addListener((tabId, updateInfo) => {
+  if(updateInfo["status"] === "complete" && updateInfo["url"] !== "about:blank") {
+    updateProfile(updateInfo);
+  }
+});
 browser.tabs.onAttached.addListener((tabId, attachInfo) => { updateProfile(attachInfo); });
 browser.tabs.onDetached.addListener((tabId, detachInfo) => { updateProfile(detachInfo); });
 

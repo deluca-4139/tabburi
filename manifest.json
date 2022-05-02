@@ -2,7 +2,7 @@
 
   "manifest_version": 2,
   "name": "tabburi",
-  "version": "0.0.1",
+  "version": "1.0.0",
 
   "description": "Tab management browser extension.",
 
@@ -23,12 +23,6 @@
   "icons": {
     "96": "icons/border-96.png",
     "128": "icons/border-128.png"
-  },
-
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "{769c85e7-528c-4242-b8cb-f9aab3f90675}"
-    }
   }
 
 }

@@ -9,7 +9,7 @@ var deleteButton = document.querySelector('.delete');
 var wizardButton = document.querySelector('.profileWizard');
 var discardedCheckbox = document.querySelector('.discardedCheckbox');
 
-clearDataButton.addEventListener('click', clearData);
+clearDataButton.addEventListener('click', clearConfirm);
 createProfileButton.addEventListener('click', createProfile);
 openButton.addEventListener('click', openTabs);
 deleteButton.addEventListener('click', deleteConfirm);
@@ -113,12 +113,21 @@ function createDefaultProfile() {
   });
 }
 
+function clearConfirm() {
+  document.getElementById('clear-button').innerText = "Are you sure?";
+  clearDataButton.removeEventListener('click', clearConfirm);
+  clearDataButton.addEventListener('click', clearData);
+}
+
 // On button click functions.
 // TODO: document
 function clearData() {
   var clearData = browser.storage.local.clear(); // if I keep this button around, will probably want to warn before clearing all data
   clearData.then(() => {
-    console.log("Your saved data has been cleared.");
+    document.getElementById('clear-button').innerText = "Clear Data";
+    clearDataButton.removeEventListener('click', clearData);
+    clearDataButton.addEventListener('click', clearConfirm);
+    console.log("Saved data has been cleared.");
   });
 }
 
@@ -175,7 +184,7 @@ function saveProfile() {
 // edits text to confirm deletion of profile with user.
 function deleteConfirm() {
   document.getElementById('delete-button').innerText = "Are you sure?";
-  deleteButton.removeEventListener('click', deleteConfirm)
+  deleteButton.removeEventListener('click', deleteConfirm);
   deleteButton.addEventListener('click', deleteProfile);
 }
 

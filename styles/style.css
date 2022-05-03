@@ -3,6 +3,8 @@ html {
   font-family: "Space Mono", monospace;
   background-color: #E6E6E6;
   overflow-x: hidden;
+  overflow-y: auto;
+  text-overflow: ellipsis;
 }
 
 .welcome {

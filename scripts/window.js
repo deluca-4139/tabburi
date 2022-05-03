@@ -52,6 +52,10 @@ function initializeProfiles() {
         profile_dict[dict] = results[dict];
       }
     }
+
+    working_tabs = profile_dict[results["env"]["current"]];
+    listWorkingTabs();
+
     console.log("Profiles initialized successfully.");
   });
 }
@@ -295,15 +299,23 @@ function updateProfiles() {
     var profile, buf; // Working variables for usage with HTML elements
 
     // Loop through all keys to add profiles to drop-down menu
+    let index = 0;
+    let foundIndex = -1;
     for(let key of keys) {
       if(key != "working" && key != "env") { // We don't want to add the working tabs/env-vars as a profile
         profile = document.createElement('option');
         profile.value = key;
         profile.text = key;
         bufMenu.appendChild(profile);
+
+        if(key == results["env"]["current"]) {
+          foundIndex = index;
+        }
       }
+      index += 1;
     }
     dropdownMenu.replaceChildren(bufMenu);
+    dropdownMenu.selectedIndex = foundIndex; // Change selected profile on startup to be currently active profile
   });
 }
 

@@ -115,6 +115,26 @@ browser.windows.onRemoved.addListener((windowId) => {
       results["env"]["wizard"] = [false, -1];
       browser.storage.local.set({ "env": results["env"] }).then(() => {
         console.log("Wizard closed.");
+
+        browser.tabs.query({currentWindow: true}).then((tabs) => {
+          let removeTabs = [];
+          for(let tab in tabs) {
+            let tabExists = false;
+            for(let tabCheck in results[results["env"]["current"]]) {
+              if(tabs[tab].id == results[results["env"]["current"]][tabCheck].id) {
+                tabExists = true;
+              }
+            }
+
+            if(!tabExists) {
+              removeTabs.push(tabs[tab].id);
+            }
+          }
+
+          browser.tabs.remove(removeTabs).then(() => {
+            console.log("Window updated.");
+          });
+        });
       });
     }
   });

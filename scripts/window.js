@@ -318,7 +318,7 @@ function updateProfiles() {
     dropdownMenu.selectedIndex = foundIndex; // Change selected profile on startup to be currently active profile
 
     let currentProfileDiv = document.getElementById('current-profile');
-    currentProfileDiv.innerHTML = `Active profile: <b>${results["env"]["current"]}</b>`;
+    currentProfileDiv.innerText = results["env"]["current"];
   });
 }
 

@@ -25,7 +25,7 @@ To construct your profiles, click on the "Profile Wizard" button. This will open
 
 To switch profiles, open up the extension, select the profile you want to switch to, and click the "Open Profile" button. tabburi will open up a new window with all of the tabs in the profile you selected, and close out the other window.
 
-tabburi automatically keeps track of any tabs you add, remove, or edit while the window is open, so there's no need to worry about saving the profile.
+tabburi automatically keeps track of any tabs you add, remove, or edit while the window is open, so there's no need to worry about saving the profile. Tabs are added and removed from the currently active profile, which is displayed below the profile selector. When you open a profile using the "Open Profile" button, it is switched to being the currently active profile.
 
 By default, tabburi will open all tabs in the selected profile as "discarded", which means that the tab exists, but the webpage within it hasn't been loaded yet, so it takes up a lot less memory. This is to allow users with profiles that contain many tabs to switch between them without a large memory overhead. If you'd like to open the tabs normally, just deselect this option before opening your profile. tabburi will remember your selection for the next time you open the extension.
 

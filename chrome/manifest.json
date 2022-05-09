@@ -1,0 +1,28 @@
+{
+
+  "manifest_version": 3,
+  "name": "tabburi",
+  "version": "1.1.0",
+
+  "description": "Tab management browser extension.",
+
+  "permissions": [
+    "tabs",
+    "storage"
+  ],
+
+  "background": {
+    "service_worker": "scripts/background.js"
+  },
+
+  "action": {
+    "default_title": "tabburi",
+    "default_popup": "htmls/window.html"
+  },
+
+  "icons": {
+    "96": "icons/border-96.png",
+    "128": "icons/border-128.png"
+  }
+
+}

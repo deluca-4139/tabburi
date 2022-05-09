@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <link href="../styles/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <br>
+
+    <center><div id="welcome" class="welcome"></div></center>
+
+    <br>
+
+
+    <label for="tab-profiles">Select profile:</label>
+    <select name="tab-profiles" id="tab-profiles">
+      <!-- Profile names go here; created in window.js -->
+    </select>
+
+    <button class="createProfile">+</button>
+    <button class="delete" id="delete-button">x</button>
+
+    <br>
+
+    Active profile: <b><span id="current-profile"></span></b> <br> <br>
+
+    <button class="open">Open Profile</button>
+    <!-- Discarded? <input type="checkbox" class="discardedCheckbox" id="discardedCheckbox"> -->
+    <button class="profileWizard">Profile Wizard</button>
+    <button class="clearData" id="clear-button">Clear Data</button>
+
+    <br> <br>
+
+    <div id="working-tabs"></div> <br>
+
+    <script src="../scripts/window.js"></script>
+  </body>
+</html>

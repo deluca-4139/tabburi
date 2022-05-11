@@ -11,7 +11,8 @@ This is a work-in-progress web browser extension for managing tabs. Its planned 
 
 ## Install
 
-On Firefox, you can install the extension by going to the AMO link [here.](https://addons.mozilla.org/en-US/firefox/addon/tabburi/) A Chrome version should hopefully be coming soon!
+On Firefox, you can install the extension by going to the AMO link [here.](https://addons.mozilla.org/en-US/firefox/addon/tabburi/) 
+On Chrome, you can install the extension by going to the CWS link [here.](https://chrome.google.com/webstore/detail/tabburi/hnaefbbodiimcnnbncinnpjlahpimhgl)
 
 ## Usage
 

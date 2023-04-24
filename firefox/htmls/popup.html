@@ -9,8 +9,8 @@
 <body>
   <div class="row">
     <div class="column">
-      <label for="tab-profiles">Select a profile:</label>
-      <select name="tab-profiles" id="tab-profiles">
+      <label for="tab-profiles">Profile to take from:</label>
+      <select name="tab-profiles-left" id="tab-profiles-left">
         <!-- Profile names go here; created in wizard.js -->
       </select>
       <br>
@@ -19,11 +19,14 @@
       <button class="submitTabs">Submit</button>
       <br>
       <br>
-      <br>
 
       <div id="list-tabs"><br></div>
     </div>
     <div class="column">
+      <label for="tab-profiles-right">Profile to add to:</label>
+      <select name="tab-profiles-right" id="tab-profiles-right">
+        <!-- Profile names go here; created in wizard.js -->
+      </select>
       <br>
       <br>
       Tabs in currently selected profile:

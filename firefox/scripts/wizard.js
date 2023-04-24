@@ -5,67 +5,25 @@ var submitTabsButton = document.querySelector('.submitTabs');
 submitTabsButton.addEventListener('click', submitTabs);
 
 var profile_dict = {};
-var working_tabs = [];
-var wizard_tabs = null;
+var toTabs = [];
+var fromTabs = null;
 
-document.getElementById('tab-profiles').onchange = profileSelect;
+document.getElementById('tab-profiles-left').onchange = fromProfileSelect;
+document.getElementById('tab-profiles-right').onchange = toProfileSelect;
 
-// List tabs from current active window.
-// Each tab has a checkbox and a favicon.
-// Note: taken and edited from window.js
-function listTabs() {
-  // Load the list of tabs if this is the first time
+function loadDefault() {
+  // Load the default profile if this is the first time
   // we're running the function; i.e. the window has
   // just been opened
-  if(wizard_tabs == null) {
-    wizard_tabs = [];
+  if(fromTabs == null) {
+    fromTabs = [];
     browser.storage.local.get(null).then((results) => {
       for(let tab of results["Default"]) {
-        wizard_tabs.push(tab);
+        fromTabs.push(tab);
       }
-      return listTabs();
+      updateTabLists();
     });
   }
-
-  let tabsListParent = document.getElementById('list-tabs');
-  let tabsList = document.createDocumentFragment();
-  //let counter = 0; // Might want to re-add this in the future
-
-  for(let tab of wizard_tabs) {
-    let tabCheckbox = document.createElement('input');
-    let tabLabel = document.createElement('label');
-    let maxLinkLength = 55;
-
-    if(tab.title) {
-      if(tab.title.length < maxLinkLength) {
-        tabLabel.textContent = tab.title;
-      }
-      else {
-        tabLabel.textContent = tab.title.substring(0, maxLinkLength) + "..."
-      }
-    }
-    else {
-      tabLabel.textContent = tab.id;
-    }
-
-    tabCheckbox.setAttribute('type', "checkbox");
-    tabCheckbox.setAttribute('name', "tabWizardList");
-    tabCheckbox.setAttribute('id', `${tab.id}`);
-    tabCheckbox.setAttribute('value', tab.url);
-    tabCheckbox.setAttribute('title', tab.title);
-
-    tabLabel.setAttribute('for', `${tab.id}`);
-
-    let tabImage = document.createElement('img');
-    tabImage.setAttribute('id', `${tab.id}`);
-    tabImage.setAttribute('src', tab.favIconUrl);
-
-    tabsList.appendChild(tabCheckbox);
-    tabsList.appendChild(tabImage);
-    tabsList.appendChild(tabLabel);
-    tabsList.appendChild(document.createElement('br'));
-  }
-  tabsListParent.replaceChildren(tabsList);
 }
 
 // Update drop-down list of profiles on main HTML display.
@@ -77,9 +35,10 @@ function updateProfiles() {
   var getStorage = browser.storage.local.get(null);
   getStorage.then((results) => {
     var keys = Object.keys(results);
-    var dropdownMenu = document.getElementById('tab-profiles'); // HTMLOptionElement for the drop-down menu
-    let bufMenu = document.createDocumentFragment();
-    var profile, buf; // Working variables for usage with HTML elements
+    var dropdownMenuRight = document.getElementById('tab-profiles-right'); // HTMLOptionElement for the right drop-down menu
+    var dropdownMenuLeft = document.getElementById('tab-profiles-left'); // HTMLOptionElement for the left drop-down menu
+    var bufMenu1 = document.createDocumentFragment();
+    var profile; // Working variables for usage with HTML elements
 
     // Loop through all keys to add profiles to drop-down menu
     for(let key of keys) {
@@ -87,10 +46,15 @@ function updateProfiles() {
         profile = document.createElement('option');
         profile.value = key;
         profile.text = key;
-        bufMenu.appendChild(profile);
+        bufMenu1.appendChild(profile);
       }
     }
-    dropdownMenu.replaceChildren(bufMenu);
+
+    // .replaceChildren() clears the document
+    // fragment, so we need to make a copy
+    var bufMenu2 = bufMenu1.cloneNode(true);
+    dropdownMenuRight.replaceChildren(bufMenu1);
+    dropdownMenuLeft.replaceChildren(bufMenu2);
   });
 }
 
@@ -110,12 +74,12 @@ function initializeProfiles() {
 
 // List working tabs for creation of profiles.
 // Note: taken and edited from window.js
-function listWorkingTabs() {
-  let workingTabsList = document.getElementById('working-tabs');
+function listWorkingTabs(divId, side) {
+  let workingTabsList = document.getElementById(divId);
   let bufTabs = document.createDocumentFragment();
   bufTabs.appendChild(document.createElement('br'));
 
-  for(let tab of working_tabs) {
+  for(let tab of (side ? toTabs : fromTabs)) {
     let tabCheckbox = document.createElement('input');
     let tabLabel = document.createElement('label');
     let maxLinkLength = 55;
@@ -133,7 +97,7 @@ function listWorkingTabs() {
     }
 
     tabCheckbox.setAttribute('type', "checkbox");
-    tabCheckbox.setAttribute('name', "tabProfileList");
+    tabCheckbox.setAttribute('name', side ? "tabOptionRight" : "tabOptionLeft");
     tabCheckbox.setAttribute('id', `${tab.id}`);
     tabCheckbox.setAttribute('value', tab.url);
     tabCheckbox.setAttribute('title', tab.title);
@@ -152,14 +116,27 @@ function listWorkingTabs() {
   workingTabsList.replaceChildren(bufTabs); // Required so working tabs list auto-updates on click in HTML
 }
 
+// Helper function to update both
+// lists of tabs simultaneously
+function updateTabLists() {
+  listWorkingTabs('working-tabs', true);
+  listWorkingTabs('list-tabs', false);
+}
+
 // Update working tabs (and list) when profile is selected.
 // TODO: doesn't work if only one profile exists. Might not need
 // to worry about this if we have a "default" profile in the future
 // Note: taken from window.js
-function profileSelect() {
-  var profileName = document.getElementById('tab-profiles').value;
-  working_tabs = profile_dict[profileName];
-  listWorkingTabs();
+function toProfileSelect() {
+  var profileName = document.getElementById('tab-profiles-right').value;
+  toTabs = profile_dict[profileName];
+  listWorkingTabs('working-tabs', true);
+}
+
+function fromProfileSelect() {
+  var profileName = document.getElementById('tab-profiles-left').value;
+  fromTabs = profile_dict[profileName];
+  listWorkingTabs('list-tabs', false);
 }
 
 // Called when submit tabs button is pressed.
@@ -167,7 +144,7 @@ function profileSelect() {
 // and record which are checked, adding them to the
 // working tabs as well as the selected profile.
 function submitTabs() {
-  let tabsList = document.getElementsByName('tabWizardList');
+  let tabsList = document.getElementsByName('tabOptionLeft');
   let imgList = document.getElementsByTagName('img');
   var checkedItems = [];
 
@@ -189,11 +166,11 @@ function submitTabs() {
 
   // Add checked items to working tabs (so profile gets updated)
   for(let item in checkedItems) {
-    working_tabs.push({ title: checkedItems[item][0], url: checkedItems[item][1], favIconUrl: checkedItems[item][2] });
+    toTabs.push({ title: checkedItems[item][0], url: checkedItems[item][1], favIconUrl: checkedItems[item][2] });
   }
 
   // Remove checked items from previously listed tabs on left
-  wizard_tabs = wizard_tabs.filter((value, index, arr) => {
+  fromTabs = fromTabs.filter((value, index, arr) => {
     for(let tab in checkedItems) {
       if(checkedItems[tab][1] == value.url) {
         return false;
@@ -204,16 +181,17 @@ function submitTabs() {
 
   // Save modified profiles
   // Note: copied and edited from window.js saveProfile()
-  var profileSelectBox = document.getElementById('tab-profiles');
-  var storing = browser.storage.local.set({ [profileSelectBox.value]: working_tabs, "Default": wizard_tabs });
+  var profileSelectBoxRight = document.getElementById('tab-profiles-right');
+  var profileSelectBoxLeft = document.getElementById('tab-profiles-left');
+  var storing = browser.storage.local.set({ [profileSelectBoxRight.value]: toTabs, [profileSelectBoxLeft.value]: fromTabs });
   storing.then(() => {
     initializeProfiles();
     updateProfiles();
-    listTabs();
-    listWorkingTabs();
+    // listTabs(); // ?
+    updateTabLists();
   });
 }
 
-document.addEventListener("DOMContentLoaded", listTabs);
+document.addEventListener("DOMContentLoaded", loadDefault);
 document.addEventListener("DOMContentLoaded", updateProfiles);
 document.addEventListener("DOMContentLoaded", initializeProfiles);

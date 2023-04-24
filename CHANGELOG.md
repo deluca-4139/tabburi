@@ -1,3 +1,7 @@
+## v1.2.0 ~ 4/23/23
+Improvements:
+* Can now select a profile other than the default in the wizard to move tabs from
+
 ## v1.1.0 ~ 5/2/22
 Improvements:
 * Select profile dropdown now has currently active profile selected on boot

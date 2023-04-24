@@ -117,6 +117,9 @@ browser.windows.onRemoved.addListener((windowId) => {
         console.log("Wizard closed.");
 
         browser.tabs.query({currentWindow: true}).then((tabs) => {
+          // Find tabs that exist in the window,
+          // but not in the profile, as we will
+          // want to remove those when the wizard closes
           let removeTabs = [];
           for(let tab in tabs) {
             let tabExists = false;
@@ -131,7 +134,35 @@ browser.windows.onRemoved.addListener((windowId) => {
             }
           }
 
+          // Find tabs that exist in the profile,
+          // but not in the window, as we will
+          // want to add those when the wizard closes
+          let addTabs = [];
+          for(let tabCheck in results[results["env"]["current"]]) {
+            let tabInWindow = false;
+            for(let tab in tabs) {
+              if(tabs[tab].id == results[results["env"]["current"]][tabCheck].id) {
+                tabInWindow = true;
+              }
+            }
+
+            if(!tabInWindow) {
+              addTabs.push(results[results["env"]["current"]][tabCheck].url)
+            }
+          }
+
           browser.tabs.remove(removeTabs).then(() => {
+            console.log("Tabs removed...");
+
+            for(let addTab of addTabs) {
+              browser.tabs.create({
+                active: false,
+                discarded: false,
+                url: addTab
+              }); // meh, i would love to be able to wait for all promises to resolve...
+            }
+
+            console.log("Tabs added...");
             console.log("Window updated.");
           });
         });
